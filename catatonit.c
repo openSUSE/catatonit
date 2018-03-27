@@ -30,24 +30,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define PROGRAM_NAME    "catatonit"
-#define PROGRAM_VERSION "0.0.0"
-#define PROGRAM_LICENSE \
- PROGRAM_NAME ": a container init so simple it's effectively brain-dead\n" \
- "Copyright (C) 2018 SUSE LLC\n" \
- "\n" \
- "This program is free software: you can redistribute it and/or modify\n" \
- "it under the terms of the GNU General Public License as published by\n" \
- "the Free Software Foundation, either version 3 of the License, or\n" \
- "(at your option) any later version.\n" \
- "\n" \
- "This program is distributed in the hope that it will be useful,\n" \
- "but WITHOUT ANY WARRANTY; without even the implied warranty of\n" \
- "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n" \
- "GNU General Public License for more details.\n" \
- "\n" \
- "You should have received a copy of the GNU General Public License\n" \
- "along with this program.  If not, see <https://www.gnu.org/licenses/>.\n" \
+#include "config.h"
 
 static enum loglevel_t {
 	LOG_FATAL = 0,
@@ -99,6 +82,19 @@ static void _log(enum loglevel_t level, char *fmt, ...)
 static void usage(void)
 {
 	fprintf(stderr, "usage: %s [-hLV] [--] <progname> [<arguments>...]\n", PROGRAM_NAME);
+}
+
+static void help(void)
+{
+	usage();
+	fprintf(stderr, "\n");
+	fprintf(stderr, "options:\n");
+	fprintf(stderr, "  -h   Print this help page.\n");
+	fprintf(stderr, "  -L   Print license information.\n");
+	fprintf(stderr, "  -V   Print version information.\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "The source code can be found at <%s>.\n", PROGRAM_URL);
+	fprintf(stderr, "For bug reporting instructions, please see: <%s>\n", PROGRAM_BUGURL);
 }
 
 static void version(void)
@@ -287,9 +283,11 @@ int main(int argc, char **argv)
 			version();
 			exit(0);
 		case 'h':
+			help();
+			exit(0);
 		default:
 			usage();
-			exit(opt != 'h');
+			exit(1);
 		}
 	}
 	argv += optind;
