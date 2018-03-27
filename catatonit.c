@@ -254,10 +254,11 @@ int main(int argc, char **argv)
 	 * they will be read from the signalfd we set up. We also keep a copy of
 	 * the original sigmask so we can re-set it on our faux-pid1.
 	 */
-	sigset_t init_sigmask, pid1_sigmask = {0};
+	sigset_t init_sigmask, pid1_sigmask;
 	if (sigfillset(&init_sigmask) < 0)
 		bail("failed to fill init_sigmask: %m");
-	for (int i = 0; i < ARRAY_LEN(kernel_signals); i++) {
+	int i;
+	for (i = 0; i < ARRAY_LEN(kernel_signals); i++) {
 		if (sigdelset(&init_sigmask, kernel_signals[i]) < 0)
 			bail("failed to clear signal %d from init_sigmask: %m", kernel_signals[i]);
 	}
