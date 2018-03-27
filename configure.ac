@@ -27,6 +27,6 @@ AC_CHECK_HEADERS([sys/prctl.h sys/signalfd.h sys/stat.h sys/types.h sys/wait.h])
 AC_TYPE_PID_T
 AC_FUNC_FORK
 
-AC_CONFIG_FILES([Makefile config.h])
+AC_CONFIG_FILES([Makefile config.h VERSION])
 AC_OUTPUT
 AM_INIT_AUTOMAKE

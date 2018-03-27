@@ -1,5 +1,6 @@
 # Our binary.
 /catatonit
+/VERSION
 
 # Autoconf generated files for binaries.
 /Makefile
