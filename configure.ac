@@ -18,7 +18,7 @@ AC_PREREQ([2.69])
 AC_INIT([catatonit], [0.1.0+dev], [https://bugs.opensuse.org/], [], [https://github.com/cyphar/catatonit/])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
-LT_PREREQ([2.4.6])
+LT_PREREQ([2.4.2])
 LT_INIT([disable-shared])
 
 AC_CHECK_HEADERS([errno.h fcntl.h signal.h stdarg.h stdio.h stdlib.h unistd.h])
