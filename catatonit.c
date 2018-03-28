@@ -94,7 +94,7 @@ static void help(void)
 	fprintf(stderr, "  -V   Print version information.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The source code can be found at <%s>.\n", PROGRAM_URL);
-	fprintf(stderr, "For bug reporting instructions, please see: <%s>\n", PROGRAM_BUGURL);
+	fprintf(stderr, "For bug reporting instructions, please see: <%s>.\n", PROGRAM_BUGURL);
 }
 
 static void version(void)
@@ -380,7 +380,7 @@ int main(int argc, char **argv)
 					pid1_exitcode = 127;
 				/* It hasn't died... */
 				else
-					warn("received signal from pid1 (%d) it is still alive", pid1);
+					warn("received SIGCHLD from pid1 (%d) but it's still alive", pid1);
 			}
 			if (reap_zombies() < 0)
 				warn("problem occurred while reaping zombies: %m");
