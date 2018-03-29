@@ -159,6 +159,8 @@ static int make_foreground(sigset_t *sigmask)
 	 * Add TTY signals to ignored mask for pid1. This isn't strictly necessary,
 	 * but we do it anyway to avoid pid1 being stopped inadvertently.
 	 */
+	if (sigaddset(sigmask, SIGTSTP) < 0)
+		bail("failed to add SIGTSTP to pid1 mask");
 	if (sigaddset(sigmask, SIGTTOU) < 0)
 		bail("failed to add SIGTTOU to pid1 mask");
 	if (sigaddset(sigmask, SIGTTIN) < 0)
@@ -351,7 +353,7 @@ int main(int argc, char **argv)
 		 * terminal (if it has TOSTOP set), which is possible since we make
 		 * pid1 the foreground process. We just ignore them.
 		 */
-		case SIGTTOU: case SIGTTIN:
+		case SIGTSTP: case SIGTTOU: case SIGTTIN:
 			debug("ignoring kernel attempting to stop us: tty has TOSTOP set");
 			break;
 
