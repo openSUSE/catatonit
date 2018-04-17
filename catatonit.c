@@ -99,12 +99,12 @@ static void help(void)
 
 static void version(void)
 {
-	fprintf(stderr, "%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
+	fprintf(stdout, "%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
 }
 
 static void license(void)
 {
-	fprintf(stderr, "%s", PROGRAM_LICENSE);
+	fprintf(stdout, "%s", PROGRAM_LICENSE);
 }
 
 #define LOG(level, ...) \
