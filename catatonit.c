@@ -23,7 +23,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <sys/prctl.h>
 #include <sys/signalfd.h>
 #include <sys/stat.h>
@@ -89,9 +91,9 @@ static void help(void)
 	usage();
 	fprintf(stderr, "\n");
 	fprintf(stderr, "options:\n");
-	fprintf(stderr, "  -h   Print this help page.\n");
-	fprintf(stderr, "  -L   Print license information.\n");
-	fprintf(stderr, "  -V   Print version information.\n");
+	fprintf(stderr, "  -h              Print this help page.\n");
+	fprintf(stderr, "  -L              Print license information.\n");
+	fprintf(stderr, "  -V, --version   Print version information.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The source code can be found at <%s>.\n", PROGRAM_URL);
 	fprintf(stderr, "For bug reporting instructions, please see: <%s>.\n", PROGRAM_BUGURL);
@@ -277,7 +279,11 @@ int main(int argc, char **argv)
 	 * first *pid1* argv argument rather than our own.
 	 */
 	int opt;
-	while ((opt = getopt(argc, argv, "hLV")) != -1) {
+	const struct option longopts[] = {
+		{name: "version", has_arg: no_argument, flag: NULL, val: 'V'},
+		{},
+	};
+	while ((opt = getopt_long(argc, argv, "hLV", longopts, NULL)) != -1) {
 		switch (opt) {
 		case 'L':
 			license();
