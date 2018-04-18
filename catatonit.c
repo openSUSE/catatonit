@@ -101,7 +101,7 @@ static void help(void)
 
 static void version(void)
 {
-	fprintf(stdout, "%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
+	fprintf(stdout, "tini version %s_%s\n", PROGRAM_VERSION, PROGRAM_NAME);
 }
 
 static void license(void)
