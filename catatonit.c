@@ -83,7 +83,7 @@ static void _log(enum loglevel_t level, char *fmt, ...)
 
 static void usage(void)
 {
-	fprintf(stderr, "usage: %s [-hLV] [--] <progname> [<arguments>...]\n", PROGRAM_NAME);
+	fprintf(stderr, "usage: %s [-ghLV] [--] <progname> [<arguments>...]\n", PROGRAM_NAME);
 }
 
 static void help(void)
@@ -91,6 +91,7 @@ static void help(void)
 	usage();
 	fprintf(stderr, "\n");
 	fprintf(stderr, "options:\n");
+	fprintf(stderr, "  -g              Forward signals to pid1's process group.\n");
 	fprintf(stderr, "  -h              Print this help page.\n");
 	fprintf(stderr, "  -L              Print license information.\n");
 	fprintf(stderr, "  -V, --version   Print version information.\n");
@@ -279,20 +280,24 @@ int main(int argc, char **argv)
 	 * first *pid1* argv argument rather than our own.
 	 */
 	int opt;
+	bool kill_pgid = false;
 	const struct option longopts[] = {
 		{name: "version", has_arg: no_argument, flag: NULL, val: 'V'},
 		{},
 	};
-	while ((opt = getopt_long(argc, argv, "hLV", longopts, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "ghLV", longopts, NULL)) != -1) {
 		switch (opt) {
+		case 'g':
+			kill_pgid = true;
+			break;
+		case 'h':
+			help();
+			exit(0);
 		case 'L':
 			license();
 			exit(0);
 		case 'V':
 			version();
-			exit(0);
-		case 'h':
-			help();
 			exit(0);
 		default:
 			usage();
@@ -329,6 +334,12 @@ int main(int argc, char **argv)
 	if (kill(pid1, 0) < 0)
 		bail("self-check that pid1 (%d) was spawned failed: %m", pid1);
 	debug("pid1 (%d) spawned: %s", pid1, argv[0]);
+
+	/*
+	 * The "pid" we send signals to. With -g we send signals to the entire
+	 * process group which pid1 is in, which is represented by a -ve pid.
+	 */
+	pid_t pid1_target = kill_pgid ? -pid1 : pid1;
 
 	/*
 	 * Wait for signals and process them as necessary. At this point we are no
@@ -397,8 +408,8 @@ int main(int argc, char **argv)
 		/* A signal sent to us by a user which we must forward to pid1. */
 		default:
 			/* We just forward the signal to pid1. */
-			if (kill(pid1, ssi.ssi_signo) < 0)
-				warn("forwarding of signal %d to pid1 (%d) failed: %m", ssi.ssi_signo, pid1);
+			if (kill(pid1_target, ssi.ssi_signo) < 0)
+				warn("forwarding of signal %d to pid1 (%d) failed: %m", ssi.ssi_signo, pid1_target);
 			break;
 		}
 	}
