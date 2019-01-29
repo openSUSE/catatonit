@@ -25,13 +25,31 @@ added.
 [initrs]: https://github.com/cyphar/initrs
 [signalfd-broken]: https://ldpreload.com/blog/signalfd-is-useless
 
+### Usage ###
+
+catatonit has identical usage to other basic `docker-init`'s -- you give it the
+command and list of arguments to that command. If catatonit is not pid1, it
+will try to use the sub-reaper support in the kernel. You can pass `-g` if you
+want signals to be forwarded to the entire process group of your spawned
+process (otherwise it's just forwarded to the process spawned).
+
+### Installation ###
+
+catatonit uses autotools for building, so building is a fairly standard:
+
+```
+% ./configure
+% make
+% sudo make install
+```
+
 ### License ###
 
 catatonit is licensed under the GNU General Public License version 3 or later.
 
 ```
 catatonit: a container init so simple it's effectively brain-dead
-Copyright (C) 2018 SUSE LLC
+Copyright (C) 2018-2019 SUSE LLC
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
