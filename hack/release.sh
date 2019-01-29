@@ -20,14 +20,13 @@ set -e
 # touch anything else in this script in order to use this elsewhere.
 project="catatonit"
 root="$(readlink -f "$(dirname "${BASH_SOURCE}")/..")"
-( cd "$root" ; autoreconf -fi ; ./configure )
 
 # This function takes an output path as an argument, where the built
 # (preferably static) binary should be placed.
 function build_project() {
 	builddir="$(dirname "$1")"
 
-	( cd "$root" ; make )
+	( cd "$root" ; autoreconf -fi ; ./configure; make )
 	strip "./$project"
 	mv "./$project" "$1"
 }
