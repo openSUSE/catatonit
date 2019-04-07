@@ -1,19 +1,12 @@
 #!/bin/bash
-# Copyright (C) 2017, 2018 SUSE LLC.
+# release.sh: configurable signed-artefact release script
+# Copyright (C) 2016-2019 SUSE LLC.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-set -e
+set -Eeuo pipefail
 
 ## --->
 # Project-specific options and functions. In *theory* you shouldn't need to
@@ -21,32 +14,48 @@ set -e
 project="catatonit"
 root="$(readlink -f "$(dirname "${BASH_SOURCE}")/..")"
 
+# Make pushd and popd silent.
+function pushd() { command pushd "$@" &>/dev/null ; }
+function  popd() { command  popd "$@" &>/dev/null ; }
+
+# These functions allow you to configure how the defaults are computed.
+function get_arch()    { uname -m ; }
+function get_version() { echo '@PACKAGE_VERSION@' | "$root/config.status" --file - ; }
+
+# Any pre-configuration steps should be done here -- for instance ./configure.
+function setup_project() {
+	pushd "$root"
+	./autogen.sh
+	./configure LDFLAGS="-static" --prefix=/ --bindir=/bin
+	popd
+}
+
 # This function takes an output path as an argument, where the built
 # (preferably static) binary should be placed.
 function build_project() {
-	builddir="$(dirname "$1")"
+	tmprootfs="$(mktemp -d --tmpdir "$project-build.XXXXXX")"
 
-	( cd "$root" ; autoreconf -fi ; ./configure; make )
-	strip "./$project"
-	mv "./$project" "$1"
+	make -C "$root" clean all install DESTDIR="$tmprootfs"
+
+	mv "$tmprootfs/bin/$project" "$1"
+	rm -rf "$tmprootfs"
 }
-
 # End of the easy-to-configure portion.
 ## <---
 
 # Print usage information.
 function usage() {
-	echo "usage: release.sh [-S <gpg-key-id>] [-c <commit-ish>] [-r <release-dir>] [-v <version>]" >&2
-	exit 1
+	echo "usage: release.sh [-h] [-v <version>] [-c <commit>] [-o <output-dir>]" >&2
+	echo "                       [-H <hashcmd>] [-S <gpg-key>]" >&2
 }
 
 # Log something to stderr.
 function log() {
-	echo "[*] $*" >&2
+	echo "[*]" "$@" >&2
 }
 
 # Log something to stderr and then exit with 0.
-function bail() {
+function quit() {
 	log "$@"
 	exit 0
 }
@@ -57,14 +66,14 @@ function gpg_cansign() {
 	gpg "$@" --clear-sign </dev/null >/dev/null
 }
 
-# When creating releases we need to build static binaries, an archive of the
-# current commit, and generate detached signatures for both.
+# When creating releases we need to build (ideally static) binaries, an archive
+# of the current commit, and generate detached signatures for both.
 keyid=""
-commit="HEAD"
 version=""
-releasedir=""
-hashcmd=""
-while getopts "S:c:r:v:h:" opt; do
+arch=""
+commit="HEAD"
+hashcmd="sha256sum"
+while getopts ":h:v:c:o:S:H:" opt; do
 	case "$opt" in
 		S)
 			keyid="$OPTARG"
@@ -72,59 +81,68 @@ while getopts "S:c:r:v:h:" opt; do
 		c)
 			commit="$OPTARG"
 			;;
-		r)
-			releasedir="$OPTARG"
+		o)
+			outputdir="$OPTARG"
 			;;
 		v)
 			version="$OPTARG"
 			;;
-		h)
+		H)
 			hashcmd="$OPTARG"
+			;;
+		h)
+			usage ; exit 0
 			;;
 		\:)
 			echo "Missing argument: -$OPTARG" >&2
-			usage
+			usage ; exit 1
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
-			usage
+			usage ; exit 1
 			;;
 	esac
 done
 
-version="${version:-$(<"$root/VERSION")}"
-releasedir="${releasedir:-release/$version}"
-hashcmd="${hashcmd:-sha256sum}"
-arch="$(uname -m)"
+# Run project setup first...
+( set -x ; setup_project )
 
-log "creating $project release in '$releasedir'"
-log "  version: $version"
-log "   commit: $commit"
-log "      key: ${keyid:-DEFAULT}"
-log "     hash: $hashcmd"
+# Generate the defaults for version and so on *after* argument parsing and
+# setup_project, to avoid calling get_version() needlessly.
+version="${version:-$(get_version)}"
+arch="${arch:-$(get_arch)}"
+outputdir="${outputdir:-release/$version}"
+
+log "[[ $project ]]"
+log "version: $version"
+log "commit: $commit"
+log "output_dir: $outputdir"
+log "key: ${keyid:-(default)}"
+log "hash_cmd: $hashcmd"
 
 # Make explicit what we're doing.
 set -x
 
 # Make the release directory.
-rm -rf "$releasedir" && mkdir -p "$releasedir"
+rm -rf "$outputdir" && mkdir -p "$outputdir"
 
 # Build project.
-build_project "$releasedir/$project.$arch"
+build_project "$outputdir/$project.$arch"
 
 # Generate new archive.
-git archive --format=tar --prefix="$project-$version/" "$commit" | xz > "$releasedir/$project.tar.xz"
+git archive --format=tar --prefix="$project-$version/" "$commit" | xz > "$outputdir/$project.tar.xz"
 
 # Generate sha256 checksums for both.
-( cd "$releasedir" ; "$hashcmd" "$project".{"$arch",tar.xz} > "$project.$hashcmd" ; )
+( cd "$outputdir" ; "$hashcmd" "$project".{"$arch",tar.xz} > "$project.$hashcmd" ; )
 
 # Set up the gpgflags.
-[[ "$keyid" ]] && export gpgflags="--default-key $keyid"
-gpg_cansign $gpgflags || bail "Could not find suitable GPG key, skipping signing step."
+gpgflags=()
+[[ -z "$keyid" ]] || gpgflags+=("--default-key=$keyid")
+gpg_cansign "${gpgflags[@]}" || quit "Could not find suitable GPG key, skipping signing step."
 
 # Sign everything.
-gpg $gpgflags --detach-sign --armor "$releasedir/$project.$arch"
-gpg $gpgflags --detach-sign --armor "$releasedir/$project.tar.xz"
-gpg $gpgflags --clear-sign --armor \
-	--output "$releasedir/$project.$hashcmd"{.tmp,} && \
-	mv "$releasedir/$project.$hashcmd"{.tmp,}
+gpg "${gpgflags[@]}" --detach-sign --armor "$outputdir/$project.$arch"
+gpg "${gpgflags[@]}" --detach-sign --armor "$outputdir/$project.tar.xz"
+gpg "${gpgflags[@]}" --clear-sign --armor \
+	--output "$outputdir/$project.$hashcmd"{.tmp,} && \
+	mv "$outputdir/$project.$hashcmd"{.tmp,}
