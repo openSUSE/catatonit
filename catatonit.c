@@ -222,10 +222,11 @@ static int spawn_pid1(char *file, char **argv, sigset_t *sigmask)
  * continually wait for child process deaths until none are reported (or we
  * have no children left).
  */
-static int reap_zombies(void)
+static int reap_zombies(pid_t pid1, int *pid1_exitcode)
 {
 	for (;;) {
 		int wstatus = 0;
+
 		pid_t child = waitpid(-1, &wstatus, WNOHANG);
 		if (child <= 0) {
 			if (errno == ECHILD) {
@@ -234,6 +235,28 @@ static int reap_zombies(void)
 			}
 			return child;
 		}
+
+		/*
+		 * There is a special-case for our pid1. If the process exits we
+		 * inherit its exit code, otherwise we assume an exit code of 127.
+		 * This will cause us to exit immediately, since pid1 is now dead.
+		 */
+		if (child == pid1) {
+			/* Did it die from an exit(2)? */
+			if (WIFEXITED(wstatus))
+				*pid1_exitcode = WEXITSTATUS(wstatus);
+			/* What about from a signal? */
+			else if (WIFSIGNALED(wstatus))
+				*pid1_exitcode = 128 + WTERMSIG(wstatus);
+			/* Is the child actually dead? */
+			else if (kill(pid1, 0) < 0)
+				*pid1_exitcode = 127;
+			/* It hasn't died... */
+			else
+				warn("received SIGCHLD from pid1 (%d) but it's still alive", pid1);
+			continue;
+		}
+
 		if (WIFEXITED(wstatus))
 			debug("child process %d exited with code %d", child, WEXITSTATUS(wstatus));
 		else if (WIFSIGNALED(wstatus))
@@ -382,26 +405,7 @@ int main(int argc, char **argv)
 		 * you'd ever want that, but no reason to not support it.
 		 */
 		case SIGCHLD:
-			/*
-			 * There is a special-case for our pid1. If the process exits we
-			 * inherit its exit code, otherwise we assume an exit code of 127.
-			 * This will cause us to exit immediately, since pid1 is now dead.
-			 */
-			if (ssi.ssi_pid == pid1) {
-				/* Did it die from an exit(2)? */
-				if (WIFEXITED(ssi.ssi_status))
-					pid1_exitcode = WEXITSTATUS(ssi.ssi_status);
-				/* What about from a signal? */
-				else if (WIFSIGNALED(ssi.ssi_status))
-					pid1_exitcode = 128 + WTERMSIG(ssi.ssi_status);
-				/* Is the child actually dead? */
-				else if (kill(pid1, 0) < 0)
-					pid1_exitcode = 127;
-				/* It hasn't died... */
-				else
-					warn("received SIGCHLD from pid1 (%d) but it's still alive", pid1);
-			}
-			if (reap_zombies() < 0)
+			if (reap_zombies(pid1, &pid1_exitcode) < 0)
 				warn("problem occurred while reaping zombies: %m");
 			break;
 
