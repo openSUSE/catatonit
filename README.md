@@ -38,6 +38,7 @@ process (otherwise it's just forwarded to the process spawned).
 catatonit uses autotools for building, so building is a fairly standard:
 
 ```
+% ./autogen.sh
 % ./configure
 % make
 % sudo make install
