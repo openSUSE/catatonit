@@ -102,6 +102,9 @@ static void help(void)
 
 static void version(void)
 {
+	// The name is intentional to make `docker-info` happy: docker is hard-coded
+	// against `tini`. This is an (unfortunate) hack to make it work nicely with
+	// catatonit.
 	fprintf(stdout, "tini version %s_%s\n", PROGRAM_VERSION, PROGRAM_NAME);
 }
 
