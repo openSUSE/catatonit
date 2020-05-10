@@ -132,7 +132,7 @@ static void license(void)
  * don't want to forward these to the child, as it will just confuse them. If
  * we get one of these, we let ourselves die rather than just carrying on.
  */
-int kernel_signals[] = {SIGFPE, SIGILL, SIGSEGV, SIGSEGV, SIGBUS, SIGABRT, SIGTRAP, SIGSYS};
+int kernel_signals[] = {SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGABRT, SIGTRAP, SIGSYS};
 
 #define ARRAY_LEN(arr) (sizeof(arr) / sizeof(*arr))
 
