@@ -216,7 +216,7 @@ static int spawn_pid1(char *file, char **argv, sigset_t *sigmask)
 	if (sigprocmask(SIG_SETMASK, sigmask, NULL) < 0)
 		bail("failed to reset sigmask: %m");
 
-	execvpe(file, argv, __environ);
+	execvpe(file, argv, environ);
 	bail("failed to exec pid1: %m");
 }
 
