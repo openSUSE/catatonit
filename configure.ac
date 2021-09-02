@@ -24,6 +24,8 @@ LT_INIT([disable-shared])
 AC_CHECK_HEADERS([errno.h fcntl.h signal.h stdarg.h stdio.h stdlib.h unistd.h])
 AC_CHECK_HEADERS([sys/prctl.h sys/signalfd.h sys/stat.h sys/types.h sys/wait.h])
 
+AC_CHECK_FUNCS([close_range])
+
 AC_TYPE_PID_T
 AC_FUNC_FORK
 

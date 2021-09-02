@@ -31,6 +31,14 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <limits.h>
+#include <dirent.h>
+
+#ifdef HAVE_CLOSE_RANGE
+# include <linux/close_range.h>
+#else
+# include <sys/syscall.h>
+#endif
 
 #include "config.h"
 
@@ -135,6 +143,103 @@ static void license(void)
 int kernel_signals[] = {SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGABRT, SIGTRAP, SIGSYS};
 
 #define ARRAY_LEN(arr) (sizeof(arr) / sizeof(*arr))
+
+#ifndef HAVE_CLOSE_RANGE
+static int close_range(unsigned int fd, unsigned int max_fd, unsigned int flags)
+{
+# ifdef __NR_close_range
+  return (int) syscall(__NR_close_range, fd, max_fd, flags);
+# else
+  errno = ENOSYS;
+  return -1;
+# endif
+}
+#endif
+
+/*
+ * Close every fd >= n that is different from exclude_fd using close_range.
+ */
+static int close_range_fds_ge_than(int n, int exclude_fd)
+{
+	int r, saved_errno = 0;
+
+	/* exclude_fd is not in the [n, UINT_MAX] range.  */
+	if (exclude_fd < n)
+		return close_range(n, UINT_MAX, 0);
+
+	/* exclude_fd is the first fd in the [n, UINT_MAX] range.  */
+	if (exclude_fd == n)
+		return close_range(n + 1, UINT_MAX, 0);
+
+	/* exclude_fd is between n and UINT_MAX.  */
+	errno = 0;
+	r = close_range(n, exclude_fd - 1, 0);
+	/*
+	 * attempt to close as many FDs as possible but return an error
+	 * if the close_range() failed.
+	 */
+	if (exclude_fd < UINT_MAX) {
+		saved_errno = errno;
+		r = close_range(exclude_fd + 1, UINT_MAX, 0);
+		/* If the previous call failed, restore errno.  */
+		if (saved_errno != 0) {
+			r = -1;
+			errno = saved_errno;
+		}
+	}
+	return r;
+}
+
+/*
+ * Close every fd >= n that is different from exclude_fd.
+ */
+static int close_fds_ge_than(int n, int exclude_fd)
+{
+	struct dirent *next;
+	int failures = 0;
+	DIR *dir;
+	int fd;
+	int r;
+
+	if (close_range_fds_ge_than(n, exclude_fd) == 0)
+		return 0;
+
+	/* Fallback when close_range fails.  */
+	debug("close_range() failed, fallback to close() each open FD: %m");
+
+	dir = opendir("/proc/self/fd");
+	if (dir == NULL) {
+		debug("cannot opendir /proc/self/fd: %m");
+		return -1;
+	}
+
+	fd = dirfd(dir);
+	for (next = readdir(dir); next; next = readdir(dir)) {
+		const char *name = next->d_name;
+		long long val;
+
+		if (name[0] == '.')
+			continue;
+
+		val = strtoll(name, NULL, 10);
+		if (val < n || val == fd || val == exclude_fd)
+			continue;
+
+		r = close(val);
+		if (r < 0) {
+			debug("cannot close %d: %m", val);
+			failures++;
+		}
+	}
+
+	r = closedir(dir);
+	if (r < 0) {
+		debug("cannot close %d: %m", fd);
+		failures++;
+	}
+
+	return -failures;
+}
 
 /*
  * Makes the current process a "foreground" process, by making it the leader of
@@ -360,6 +465,9 @@ int main(int argc, char **argv)
 	if (kill(pid1, 0) < 0)
 		bail("self-check that pid1 (%d) was spawned failed: %m", pid1);
 	debug("pid1 (%d) spawned: %s", pid1, argv[0]);
+
+	if (close_fds_ge_than(3, sfd) < 0)
+		warn("failed to close some file descriptor in range >=3");
 
 	/*
 	 * The "pid" we send signals to. With -g we send signals to the entire
