@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -194,6 +195,37 @@ static int make_foreground(sigset_t *sigmask)
 }
 
 /*
+ * If the LISTEN_PID environment variable is set to the parent pid, rewrite it to
+ * point to the current pid.
+ */
+static void rewrite_listen_pid_env()
+{
+	char *listen_pid = getenv("LISTEN_PID");
+	long long val;
+
+	if (listen_pid == NULL)
+		return;
+
+	errno = 0;
+	val = strtoll(listen_pid, NULL, 10);
+	if (errno == ERANGE) {
+		warn("LISTEN_PID has an invalid value");
+		return;
+	}
+
+	if (val == getppid()) {
+		char pid_str[32];
+		int r;
+
+		snprintf(pid_str, sizeof(pid_str), "%d", getpid());
+
+		r = setenv("LISTEN_PID", pid_str, 1);
+		if (r < 0)
+			warn("could not overwrite env variable LISTEN_PID: %m");
+	}
+}
+
+/*
  * Spawn a child process with the given arguments and signal map and make it a
  * faux-pid1 by placing it in the foreground. This is the main process which
  * catatonit is going to be managing throughout its life.
@@ -206,6 +238,8 @@ static int spawn_pid1(char *file, char **argv, sigset_t *sigmask)
 			error("failed to fork child: %m");
 		return child;
 	}
+
+	rewrite_listen_pid_env();
 
 	/*
 	 * We are now in the child. Set up our sigmask, put ourselves in the
