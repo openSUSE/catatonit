@@ -261,7 +261,7 @@ static int make_foreground(sigset_t *sigmask)
 	 * using STDIN_FILENO) is the the file descriptor could be duped over, but
 	 * we still should become the controlling process.
 	 */
-	int ttyfd = open("/dev/tty", O_RDWR);
+	int ttyfd = open("/dev/tty", O_RDWR|O_CLOEXEC);
 	if (ttyfd < 0) {
 		info("using stdin as tty fd: could not open /dev/tty: %m");
 		ttyfd = STDIN_FILENO;
@@ -296,6 +296,8 @@ static int make_foreground(sigset_t *sigmask)
 			break;
 		}
 	}
+	if (ttyfd != STDIN_FILENO)
+		close(ttyfd);
 	return 0;
 }
 
