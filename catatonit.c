@@ -92,7 +92,7 @@ static void _log(enum loglevel_t level, char *fmt, ...)
 
 static void usage(void)
 {
-	fprintf(stderr, "usage: %s [-ghLV] [--] <progname> [<arguments>...]\n", PROGRAM_NAME);
+	fprintf(stderr, "usage: %s [-ghLVP] [--] <progname> [<arguments>...]\n", PROGRAM_NAME);
 }
 
 static void help(void)
@@ -448,14 +448,18 @@ int main(int argc, char **argv)
 	 */
 	int opt;
 	bool kill_pgid = false;
+	bool run_as_pause = false;
 	const struct option longopts[] = {
 		{name: "version", has_arg: no_argument, flag: NULL, val: 'V'},
 		{},
 	};
-	while ((opt = getopt_long(argc, argv, "ghLV", longopts, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "ghLPV", longopts, NULL)) != -1) {
 		switch (opt) {
 		case 'g':
 			kill_pgid = true;
+			break;
+		case 'P':
+			run_as_pause = true;
 			break;
 		case 'h':
 			help();
@@ -473,7 +477,7 @@ int main(int argc, char **argv)
 	}
 	argv += optind;
 	argc -= optind;
-	if (argc < 1)
+	if (argc < 1 && !run_as_pause)
 		bail_usage("missing program name");
 
 	/*
@@ -493,14 +497,18 @@ int main(int argc, char **argv)
 	}
 
 	/* Spawn the faux-pid1. */
-	pid_t pid1 = spawn_pid1(argv[0], argv, &pid1_sigmask);
-	if (pid1 <= 0)
-		bail("failed to spawn pid1: %m");
+	pid_t pid1 = 0;
 
-	/* One final check to make sure that it actually spawned. */
-	if (kill(pid1, 0) < 0)
-		bail("self-check that pid1 (%d) was spawned failed: %m", pid1);
-	debug("pid1 (%d) spawned: %s", pid1, argv[0]);
+	if (!run_as_pause) {
+		pid1 = spawn_pid1(argv[0], argv, &pid1_sigmask);
+		if (pid1 <= 0)
+			bail("failed to spawn pid1: %m");
+
+		/* One final check to make sure that it actually spawned. */
+		if (kill(pid1, 0) < 0)
+			bail("self-check that pid1 (%d) was spawned failed: %m", pid1);
+		debug("pid1 (%d) spawned: %s", pid1, argv[0]);
+	}
 
 	if (close_fds_ge_than(3, sfd) < 0)
 		warn("failed to close some file descriptor in range >=3");
@@ -509,7 +517,7 @@ int main(int argc, char **argv)
 	 * The "pid" we send signals to. With -g we send signals to the entire
 	 * process group which pid1 is in, which is represented by a -ve pid.
 	 */
-	pid_t pid1_target = kill_pgid ? -pid1 : pid1;
+	pid_t pid1_target = run_as_pause ? 0 : (kill_pgid ? -pid1 : pid1);
 
 	/*
 	 * Wait for signals and process them as necessary. At this point we are no
@@ -559,7 +567,10 @@ int main(int argc, char **argv)
 		/* A signal sent to us by a user which we must forward to pid1. */
 		default:
 			/* We just forward the signal to pid1. */
-			if (kill(pid1_target, ssi.ssi_signo) < 0)
+			if (run_as_pause) {
+				if (ssi.ssi_signo == SIGTERM || ssi.ssi_signo == SIGINT)
+					return 0;
+			} else if (kill(pid1_target, ssi.ssi_signo) < 0)
 				warn("forwarding of signal %d to pid1 (%d) failed: %m", ssi.ssi_signo, pid1_target);
 			break;
 		}
