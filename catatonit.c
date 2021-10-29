@@ -92,7 +92,7 @@ static void _log(enum loglevel_t level, char *fmt, ...)
 
 static void usage(void)
 {
-	fprintf(stderr, "usage: %s [-ghLVP] [--] <progname> [<arguments>...]\n", PROGRAM_NAME);
+	fprintf(stderr, "usage: %s [-ghLPV] [--] <progname> [<arguments>...]\n", PROGRAM_NAME);
 }
 
 static void help(void)
@@ -103,6 +103,7 @@ static void help(void)
 	fprintf(stderr, "  -g              Forward signals to pid1's process group.\n");
 	fprintf(stderr, "  -h              Print this help page.\n");
 	fprintf(stderr, "  -L              Print license information.\n");
+	fprintf(stderr, "  -P              Run in pause mode (no program is run and quit on SIGINT).\n");
 	fprintf(stderr, "  -V, --version   Print version information.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The source code can be found at <%s>.\n", PROGRAM_URL);
@@ -570,8 +571,9 @@ int main(int argc, char **argv)
 			if (run_as_pause) {
 				if (ssi.ssi_signo == SIGTERM || ssi.ssi_signo == SIGINT)
 					return 0;
-			} else if (kill(pid1_target, ssi.ssi_signo) < 0)
+			} else if (kill(pid1_target, ssi.ssi_signo) < 0) {
 				warn("forwarding of signal %d to pid1 (%d) failed: %m", ssi.ssi_signo, pid1_target);
+			}
 			break;
 		}
 	}
