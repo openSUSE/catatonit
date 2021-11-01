@@ -19,8 +19,8 @@ some time spent looking at `tini` and `dumb-init` we felt that such patches
 would be closer to full rewrites.
 
 In addition, the purpose of `catatonit` is to only support the key usage by
-`docker-init` which is `/dev/init -- <your program>`. No other features will be
-added.
+`docker-init` which is `/dev/init -- <your program>`. With few exceptions, no
+other features will be added.
 
 [initrs]: https://github.com/cyphar/initrs
 [signalfd-broken]: https://ldpreload.com/blog/signalfd-is-useless
@@ -32,6 +32,9 @@ command and list of arguments to that command. If catatonit is not pid1, it
 will try to use the sub-reaper support in the kernel. You can pass `-g` if you
 want signals to be forwarded to the entire process group of your spawned
 process (otherwise it's just forwarded to the process spawned).
+
+If you wish to use catatonit as a convenient pause container (do not spawn a
+child process nor do any signal handling), use pass `-P`.
 
 ### Installation ###
 
