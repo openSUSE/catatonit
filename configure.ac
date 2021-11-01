@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ([2.69])
-AC_INIT([catatonit], [0.1.6+dev], [https://bugs.opensuse.org/], [], [https://github.com/openSUSE/catatonit/])
+AC_INIT([catatonit], [0.1.7], [https://bugs.opensuse.org/], [], [https://github.com/openSUSE/catatonit/])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 LT_PREREQ([2.4.2])
