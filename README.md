@@ -1,6 +1,6 @@
 ## catatonit ##
 
-[![Build Status](https://travis-ci.org/openSUSE/catatonit.svg?branch=master)](https://travis-ci.org/openSUSE/catatonit)
+[![Build Status](https://github.com/openSUSE/catatonit/actions/workflows/ci.yml/badge.svg)](https://github.com/openSUSE/catatonit/actions/workflows/ci.yml)
 
 A container init that is so simple it's effectively brain-dead. This is a
 rewrite of [initrs][initrs] in C, because we found that it is not possible to
