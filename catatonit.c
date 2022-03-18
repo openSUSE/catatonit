@@ -482,6 +482,11 @@ int main(int argc, char **argv)
 	if (argc < 1 && !run_as_pause)
 		bail_usage("missing program name");
 
+	char *kill_pgid_env = secure_getenv("CATATONIT_KILLPG");
+	if (kill_pgid_env != NULL) {
+		kill_pgid = true;
+	}
+
 	/*
 	 * If we aren't pid1, we have to set subreaper or bail. Otherwise zombies
 	 * will collect on the host and that's just not a good idea. We don't just

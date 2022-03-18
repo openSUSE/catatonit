@@ -29,9 +29,10 @@ other features will be added.
 
 catatonit has identical usage to other basic `docker-init`'s -- you give it the
 command and list of arguments to that command. If catatonit is not pid1, it
-will try to use the sub-reaper support in the kernel. You can pass `-g` if you
-want signals to be forwarded to the entire process group of your spawned
-process (otherwise it's just forwarded to the process spawned).
+will try to use the sub-reaper support in the kernel. You can pass `-g` or set
+the `CATATONIT_KILLPG` environment variable if you want signals to be forwarded
+to the entire process group of your spawned process (otherwise it's just
+forwarded to the process spawned).
 
 If you wish to use catatonit as a convenient pause container (do not spawn a
 child process nor do any signal handling), use pass `-P`.
