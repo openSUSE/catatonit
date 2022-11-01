@@ -36,7 +36,7 @@
 #include <limits.h>
 #include <dirent.h>
 
-#ifdef HAVE_CLOSE_RANGE
+#ifdef HAVE_LINUX_CLOSE_RANGE_H
 # include <linux/close_range.h>
 #else
 # include <sys/syscall.h>

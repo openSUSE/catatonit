@@ -24,7 +24,7 @@ LT_PREREQ([2.4.2])
 LT_INIT([disable-shared])
 
 AC_CHECK_HEADERS([errno.h fcntl.h signal.h stdarg.h stdio.h stdlib.h unistd.h])
-AC_CHECK_HEADERS([sys/prctl.h sys/signalfd.h sys/stat.h sys/types.h sys/wait.h])
+AC_CHECK_HEADERS([linux/close_range.h sys/prctl.h sys/signalfd.h sys/stat.h sys/types.h sys/wait.h])
 
 AC_CHECK_FUNCS([close_range])
 
