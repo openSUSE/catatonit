@@ -1,9 +1,11 @@
-# catatonit: a container init so simple it's effectively brain-dead
-# Copyright (C) 2018 SUSE LLC
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
-# This program is free software: you can redistribute it and/or modify
+# catatonit: a container init so simple it's effectively brain-dead
+# Copyright (C) 2018-2023 SUSE LLC
+#
+# This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
+# the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -15,7 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ([2.69])
-AC_INIT([catatonit], [0.1.7+dev], [https://bugs.opensuse.org/], [], [https://github.com/openSUSE/catatonit/])
+AC_INIT([catatonit], [0.2.0+dev], [https://bugs.opensuse.org/], [], [https://github.com/openSUSE/catatonit/])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 LT_PREREQ([2.4.2])
