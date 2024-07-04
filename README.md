@@ -28,16 +28,30 @@ other features will be added.
 ### Usage ###
 
 catatonit has identical usage to other basic `docker-init`'s -- you give it the
-command and list of arguments to that command. If catatonit is not pid1, it
-will try to use the sub-reaper support in the kernel. You can pass `-g` if you
-want signals to be forwarded to the entire process group of your spawned
-process (otherwise it's just forwarded to the process spawned).
+command and list of arguments to that command.
 
-If you wish to use catatonit as a convenient pause container (do not spawn a
-child process nor do any signal handling), use pass `-P`.
+If you install `catatonit` to `/usr/bin/docker-init`, `docker run --init` will
+use `catatonit` as its container pid1. Alternatively, you can configure the
+Docker daemon to use `catatonit` without deleting any previously installed
+`/usr/bin/docker-init` by using `--init-path` (or adding an `init-path` setting
+in `/etc/docker/daemon.json`). Podman has similar options.
 
-Within a Dockerfile, you can just conveniently use catatonit as your
-entrypoint:
+Catatonit supports a very limit subset of features, in order to keep the code
+as simple as possible:
+
+* If catatonit is not pid1 (in other words, you are not in a PID namespace), it
+  will try to use the sub-reaper support in the kernel to act as a
+  "pseudo-init" for the process you requested.
+
+* You can pass `-g` if you want signals to be forwarded to the entire process
+  group of your spawned process (otherwise it's just forwarded to the process
+  spawned).
+
+* If you wish to use catatonit as a convenient pause container (do not spawn a
+  child process nor do any signal handling), you can pass `-P`.
+
+If you want to include `catatonit` in your images, you can conveniently add it
+to your Dockerfile as an entrypoint:
 
 ```dockerfile
 # Runs "catatonit -- /my/amazing/script --with --args"
@@ -59,6 +73,10 @@ catatonit uses autotools for building, so building is a fairly standard:
 % make
 % sudo make install
 ```
+
+Note that this install the `catatonit` binary to `/usr/bin/catatonit`. If you
+want to use `docker run --init` you may need to symlink `/usr/bin/docker-init`
+to `catatonit` or configure Docker to use `catatonit`.
 
 ### License ###
 
