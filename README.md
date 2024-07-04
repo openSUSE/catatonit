@@ -36,6 +36,19 @@ process (otherwise it's just forwarded to the process spawned).
 If you wish to use catatonit as a convenient pause container (do not spawn a
 child process nor do any signal handling), use pass `-P`.
 
+Within a Dockerfile, you can just conveniently use catatonit as your
+entrypoint:
+
+```dockerfile
+# Runs "catatonit -- /my/amazing/script --with --args"
+ENTRYPOINT ["catatonit", "--"]
+
+# or if you use --rewrite or other cli flags
+# ENTRYPOINT ["catatonit", "--rewrite", "2:3", "--"]
+
+CMD ["/my/amazing/script", "--with", "--args"]
+```
+
 ### Installation ###
 
 catatonit uses autotools for building, so building is a fairly standard:
