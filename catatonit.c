@@ -512,6 +512,14 @@ int main(int argc, char **argv)
 		debug("pid1 (%d) spawned: %s", pid1, argv[0]);
 	}
 
+	/*
+	 * Switch to / explicitly, to work around a known podman issue where podman
+	 * runs "catatonit -P" in a subdirectory which causes umount to fail
+	 * because the directory is pinned by catatonit. Ignore errors since we
+	 * don't care about the cwd anyway.
+	 */
+	(void) chdir("/");
+
 	if (close_fds_ge_than(3, sfd) < 0)
 		warn("failed to close some file descriptor in range >=3");
 
