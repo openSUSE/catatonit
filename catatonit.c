@@ -415,11 +415,11 @@ static int reap_zombies(pid_t pid1, int *pid1_exitcode)
 int main(int argc, char **argv)
 {
 	/* If CATATONIT_DEBUG is defined we change the global log level. */
-	char *logstring = secure_getenv("CATATONIT_DEBUG");
+	char *logstring = getenv("CATATONIT_DEBUG");
 	if (logstring != NULL)
 		global_log_level = LOG_DEBUG;
 	/* CATATONIT_LOG is reserved for future use. */
-	if (secure_getenv("CATATONIT_LOG"))
+	if (getenv("CATATONIT_LOG"))
 		bail("CATATONIT_LOG is reserved for future use");
 
 	/*
