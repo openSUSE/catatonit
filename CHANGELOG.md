@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] ##
 
+## [0.2.1] - 2024-12-14 ##
+
 ### Fixed ###
  * `catatonit` will now `chdir` to `/` in order to avoid keeping the directory
    it was running in busy. This was causing issues with rootless Podman's pause
@@ -74,7 +76,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 This is the first release of catatonit. At this point it works fully (to
 the best of my ability) and is incredibly simple to use and maintain.
 
-[Unreleased]: https://github.com/openSUSE/catatonit/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/openSUSE/catatonit/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/openSUSE/catatonit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/openSUSE/catatonit/compare/v0.1.7...v0.2.0
 [0.1.7]: https://github.com/openSUSE/catatonit/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/openSUSE/catatonit/compare/v0.1.5...v0.1.6
