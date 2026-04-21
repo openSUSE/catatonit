@@ -230,7 +230,7 @@ static int close_fds_ge_than(int n, int exclude_fd)
 
 		r = close(val);
 		if (r < 0) {
-			debug("cannot close %d: %m", val);
+			debug("cannot close %lld: %m", val);
 			failures++;
 		}
 	}
