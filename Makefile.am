@@ -18,5 +18,7 @@
 
 bin_PROGRAMS = catatonit
 
+AM_CFLAGS = -Wall -Wformat=2 -Werror=format-security
+
 catatonit_LDFLAGS = -all-static
 catatonit_SOURCES = catatonit.c
