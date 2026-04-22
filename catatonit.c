@@ -52,7 +52,15 @@ static enum loglevel_t {
 	LOG_DEBUG = 4,
 } global_log_level = LOG_ERROR;
 
-static void _log(enum loglevel_t level, char *fmt, ...)
+#if defined(__GNUC__) || defined(__clang__)
+# define PRINTF_LIKE(fmt_idx, arg_idx) __attribute__((format(printf, fmt_idx, arg_idx)))
+#else
+# define PRINTF_LIKE(fmt_idx, arg_idx)
+#endif
+
+static void _log(enum loglevel_t level, const char *fmt, ...) PRINTF_LIKE(2, 3);
+
+static void _log(enum loglevel_t level, const char *fmt, ...)
 {
 	va_list ap;
 	int old_errno = errno;
